@@ -9,3 +9,4 @@ def get_data():
     response = requests.get("http://api.example.com/data")
     return response.json()
 db_password = "root123"
+# testing gemini ai review
