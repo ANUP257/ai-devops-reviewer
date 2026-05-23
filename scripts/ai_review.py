@@ -1,48 +1,34 @@
 import os
-import openai
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Always create review.txt first thing
+with open("review.txt", "w") as f:
+    f.write("Starting AI Review...")
 
-def review_code(diff):
-    try:
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert DevOps reviewer"},
-                {"role": "user", "content": f"""
-You are a senior DevOps engineer.
-Review the following code diff and:
-- Identify bugs
-- Suggest improvements
-- Highlight security risks
-
-Code:
-{diff}
-"""}
-            ],
-            temperature=0.3
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"AI Review could not be completed. Error: {str(e)}"
-
-if __name__ == "__main__":
-    # Create empty diff if file doesn't exist
-    if not os.path.exists("diff.txt"):
-        with open("diff.txt", "w") as f:
-            f.write("")
+try:
+    import openai
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     with open("diff.txt", "r") as f:
         diff = f.read()
 
     if not diff.strip():
-        review = "No code changes detected to review."
+        review = "No code changes detected."
     else:
-        review = review_code(diff)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert DevOps reviewer"},
+                {"role": "user", "content": f"Review this code diff:\n{diff}"}
+            ],
+            temperature=0.3
+        )
+        review = response.choices[0].message.content
 
-    # Always write review.txt even if API fails
-    with open("review.txt", "w") as f:
-        f.write(review)
+except Exception as e:
+    review = f"AI Review Error: {str(e)}"
 
-    print(review)
+# Update review.txt with actual result
+with open("review.txt", "w") as f:
+    f.write(review)
+
+print(review)
